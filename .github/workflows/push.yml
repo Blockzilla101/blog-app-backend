@@ -21,6 +21,6 @@ jobs:
       - run: |
           rm -rf dist/
           npm exec tsc
-          rm -rf /home/github-runner/deployments/todo-app-backend/*
+          rm -rf /home/github-runner/deployments/todo-app-backend/dist/
           cp -rv dist /home/github-runner/deployments/todo-app-backend/
           supervisorctl restart todo-app-backend

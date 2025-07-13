@@ -3,6 +3,7 @@ import { orm } from "../database/index.js";
 import { UserAccountEntity } from "../entities/user-account.entity.js";
 import { checkSchema } from "express-validator";
 import { hashPassword } from "../util.js";
+import { TodoListEntity } from "../entities/todo-list.entity.js";
 
 export const accountRoute = express();
 const em = orm.em.fork();
@@ -74,7 +75,12 @@ accountRoute.post("/sign-up", async (req, res) => {
         passwordHash: await hashPassword(password),
     });
 
-    await em.persistAndFlush(account);
+    const todoList = em.create(TodoListEntity, {
+        user: account,
+        name: "Your Todo List",
+    });
+
+    await em.persistAndFlush([account, todoList]);
 
     // todo return a session
     res.status(201)
@@ -131,4 +137,38 @@ accountRoute.post("/login", async (req, res) => {
     return res.status(200)
               .json(account);
 
+});
+
+accountRoute.get("/info", async (req, res) => {
+    // todo use the provided session token
+    const account = await em.findOne(UserAccountEntity, {
+        uuid: "b6102c6c-b2ea-4ffd-bb6d-888a8ab46511",
+    }, {
+        populate: ["*"],
+    });
+
+    if (!account) {
+        return res.status(404)
+                  .json({
+                      errors: [
+                          {
+                              msg: "Account not found.",
+                          },
+                      ],
+                  });
+    }
+
+    res.status(200)
+       .json({
+           uuid: account.uuid,
+           firstName: account.firstName,
+           lastName: account.lastName,
+           todoLists: account.todoLists.map(t => ({
+               name: t.name, uuid: t.uuid, items: t.items.map(i => ({
+                   uuid: i.uuid,
+                   title: i.title,
+                   completed: i.completed,
+               })),
+           })),
+       });
 });

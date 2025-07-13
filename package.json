@@ -16,6 +16,7 @@
     "@mikro-orm/core": "^6.4.11",
     "@mikro-orm/migrations": "^6.4.12",
     "@mikro-orm/reflection": "^6.4.12",
+    "bcrypt": "^6.0.0",
     "chalk": "^5.4.1",
     "cors": "^2.8.5",
     "dotenv": "^16.4.7",

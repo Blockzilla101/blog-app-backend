@@ -1,5 +1,4 @@
 import "dotenv/config";
-import bodyParser from "body-parser";
 import cors from "cors";
 import express from "express";
 import { create, Log } from "./log.js";
@@ -25,9 +24,9 @@ app.use((req, res, next) => {
 });
 
 app.use(cors());
-app.use("/v1", v1);
+app.use(express.json());
 
-app.use(bodyParser.json());
+app.use("/v1", v1);
 
 app.listen(port, () => {
     log.info(`Server is running on port ${port}`);

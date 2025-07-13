@@ -19,6 +19,7 @@ jobs:
       - name: Install dependencies
         run: npm install --dev
       - run: |
+          rm -rf dist/
           npm exec tsc
           rm -rf /home/github-runner/deployments/todo-app-backend/*
           cp -rv dist /home/github-runner/deployments/todo-app-backend/

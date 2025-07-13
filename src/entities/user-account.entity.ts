@@ -16,7 +16,7 @@ export class UserAccountEntity {
     @Property()
     lastName!: string;
 
-    @Property()
+    @Property({ unique: true })
     email!: string;
 
     @Property()

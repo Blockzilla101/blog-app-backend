@@ -5,7 +5,7 @@ import { TodoListEntity } from "../entities/todo-list.entity.js";
 import { TodoItemEntity } from "../entities/todo-item.entity.js";
 
 export const todoRoute = express();
-const em = orm.em.fork();
+const em = orm.em;
 
 // todo handle authorization
 
@@ -97,7 +97,7 @@ todoRoute.post("/create/:list", async (req, res) => {
 todoRoute.patch("/update/:list/:todo", async (req, res) => {
     const result = await checkSchema({
         list: {
-            in: "query",
+            in: "params",
             isUUID: {
                 errorMessage: "Invalid list uuid",
             },
@@ -147,15 +147,15 @@ todoRoute.patch("/update/:list/:todo", async (req, res) => {
     const title = req.body.title;
     const completed = req.body.completed;
 
-    if (!title && !completed) {
+    if (title == null && completed == null) {
         return res.status(400)
                   .json({
                       errors: [{ msg: "At least one field must be provided" }],
                   });
     }
 
-    if (title) item.title = title;
-    if (completed) item.title = completed;
+    if (title != null) item.title = title;
+    if (completed != null) item.completed = completed;
 
     await em.persistAndFlush(item);
 
@@ -170,7 +170,7 @@ todoRoute.patch("/update/:list/:todo", async (req, res) => {
 todoRoute.delete("/delete/:list/:todo", async (req, res) => {
     const result = await checkSchema({
         list: {
-            in: "query",
+            in: "params",
             isUUID: {
                 errorMessage: "Invalid list uuid",
             },
@@ -205,5 +205,6 @@ todoRoute.delete("/delete/:list/:todo", async (req, res) => {
 
     await orm.em.removeAndFlush(item);
 
-    return res.status(200);
+    return res.status(200)
+              .json({ success: true });
 });

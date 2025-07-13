@@ -4,6 +4,7 @@ import { TsMorphMetadataProvider } from "@mikro-orm/reflection";
 const config: Options = {
     driver: BetterSqliteDriver,
     dbName: "data.db",
+    allowGlobalContext: true,
     entities: ["dist/**/*.entity.js"],
     entitiesTs: ["src/**/*.entity.ts"],
     metadataProvider: TsMorphMetadataProvider,

@@ -6,7 +6,7 @@ import { hashPassword } from "../util.js";
 import { TodoListEntity } from "../entities/todo-list.entity.js";
 
 export const accountRoute = express();
-const em = orm.em.fork();
+const em = orm.em;
 
 async function checkEmailNotExists(email: string) {
     const existing = await em.findOne(UserAccountEntity, { email });
@@ -143,8 +143,6 @@ accountRoute.get("/info", async (req, res) => {
     // todo use the provided session token
     const account = await em.findOne(UserAccountEntity, {
         uuid: "b6102c6c-b2ea-4ffd-bb6d-888a8ab46511",
-    }, {
-        populate: ["*"],
     });
 
     if (!account) {
@@ -158,17 +156,31 @@ accountRoute.get("/info", async (req, res) => {
                   });
     }
 
+    const lists = await account.todoLists.loadItems();
+    for (const list of lists) {
+        await list.items.loadItems({
+            refresh: true,
+            orderBy: {
+                completed: "ASC",
+                createdAt: "DESC",
+            },
+        });
+    }
+
     res.status(200)
        .json({
            uuid: account.uuid,
            firstName: account.firstName,
            lastName: account.lastName,
            todoLists: account.todoLists.map(t => ({
-               name: t.name, uuid: t.uuid, items: t.items.map(i => ({
-                   uuid: i.uuid,
-                   title: i.title,
-                   completed: i.completed,
-               })),
+               name: t.name,
+               uuid: t.uuid,
+               items: t.items
+                       .map(i => ({
+                           uuid: i.uuid,
+                           title: i.title,
+                           completed: i.completed,
+                       })),
            })),
        });
 });

@@ -72,5 +72,43 @@ export async function getSessionAccount(req: Meta["req"]): Promise<UserAccountEn
     return session.user;
 }
 
-sessionRoute.post("/refresh", async (req, res) => {
+sessionRoute.use(authorizedRoute);
+
+sessionRoute.get("/refresh", async (req, res) => {
+    const token = req.header("Authorization")!.split(" ")[1];
+    const session = await em.findOneOrFail(SessionEntity, {
+        token,
+    }, {
+        populate: ["user"],
+    });
+
+    session.expiresAt = Date.now() + 30 * 24 * 60 * 60 * 1000;
+
+    await em.persistAndFlush(session);
+
+    return res.status(200)
+              .json({
+                  account: {
+                      firstName: session.user.firstName,
+                      lastName: session.user.lastName,
+                  },
+                  session: {
+                      token: session.token,
+                      expiresAt: session.expiresAt,
+                  },
+              });
+});
+
+sessionRoute.get("/revoke", async (req, res) => {
+    const token = req.header("Authorization")!.split(" ")[1];
+    const session = await em.findOneOrFail(SessionEntity, {
+        token,
+    });
+
+    await em.removeAndFlush(session);
+
+    return res.status(200)
+              .json({
+                  success: "true",
+              });
 });

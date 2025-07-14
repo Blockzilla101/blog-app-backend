@@ -2,7 +2,7 @@ import express from "express";
 import { orm } from "../database/index.js";
 import { UserAccountEntity } from "../entities/user-account.entity.js";
 import { checkSchema } from "express-validator";
-import { hashPassword } from "../util.js";
+import { compareSecret, hashSecret } from "../util.js";
 import { TodoListEntity } from "../entities/todo-list.entity.js";
 import { authorizedRoute, createSession, getSessionAccount } from "./session.js";
 
@@ -73,7 +73,7 @@ accountRoute.post("/sign-up", async (req, res) => {
         email,
         firstName,
         lastName,
-        passwordHash: await hashPassword(password),
+        passwordHash: hashSecret(password),
     });
 
     const todoList = em.create(TodoListEntity, {
@@ -129,10 +129,8 @@ accountRoute.post("/login", async (req, res) => {
     const email = req.body.email;
     const password = req.body.password;
 
-    const passwordHash = await hashPassword(password);
-
-    const account = await em.findOne(UserAccountEntity, { email, passwordHash });
-    if (!account) {
+    const account = await em.findOne(UserAccountEntity, { email });
+    if (!account || !compareSecret(password, account.passwordHash)) {
         return res.status(401)
                   .json({
                       errors: [

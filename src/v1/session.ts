@@ -3,6 +3,7 @@ import { orm } from "../database/index.js";
 import { checkSchema, Meta } from "express-validator";
 import { SessionEntity } from "../entities/session.entity.js";
 import { UserAccountEntity } from "../entities/user-account.entity.js";
+import { generateToken } from "../util.js";
 
 export const sessionRoute = express();
 const em = orm.em;
@@ -46,9 +47,7 @@ export async function authorizedRoute(req: Request, res: Response, next: NextFun
 export async function createSession(req: Meta["req"], user: UserAccountEntity) {
     const session = em.create(SessionEntity, {
         user,
-        token: `${Math.floor(Math.random() * 1000 * Date.now())
-                      .toString(16)}${Date.now()
-                                          .toString(16)}`,
+        token: generateToken(),
         ipAddress: req.header("X-Real-IP") ?? req.ip ?? "unknown",
     });
 

@@ -4,6 +4,7 @@ import { UserAccountEntity } from "../entities/user-account.entity.js";
 import { checkSchema } from "express-validator";
 import { hashPassword } from "../util.js";
 import { TodoListEntity } from "../entities/todo-list.entity.js";
+import { authorizedRoute, createSession, getSessionAccount } from "./session.js";
 
 export const accountRoute = express();
 const em = orm.em;
@@ -82,9 +83,19 @@ accountRoute.post("/sign-up", async (req, res) => {
 
     await em.persistAndFlush([account, todoList]);
 
-    // todo return a session
-    res.status(201)
-       .json({ message: "Account created successfully", accountId: account.uuid });
+    const session = await createSession(req, account);
+
+    return res.status(200)
+              .json({
+                  account: {
+                      firstName: account.firstName,
+                      lastName: account.lastName,
+                  },
+                  session: {
+                      token: session.token,
+                      expiresAt: session.expiresAt,
+                  },
+              });
 });
 
 accountRoute.post("/login", async (req, res) => {
@@ -132,18 +143,26 @@ accountRoute.post("/login", async (req, res) => {
                   });
     }
 
-    // todo return a session
+    const session = await createSession(req, account);
 
     return res.status(200)
-              .json(account);
-
+              .json({
+                  account: {
+                      firstName: account.firstName,
+                      lastName: account.lastName,
+                  },
+                  session: {
+                      token: session.token,
+                      expiresAt: session.expiresAt,
+                  },
+              });
 });
+
+accountRoute.use(authorizedRoute);
 
 accountRoute.get("/info", async (req, res) => {
     // todo use the provided session token
-    const account = await em.findOne(UserAccountEntity, {
-        uuid: "b6102c6c-b2ea-4ffd-bb6d-888a8ab46511",
-    });
+    const account = await getSessionAccount(req);
 
     if (!account) {
         return res.status(404)

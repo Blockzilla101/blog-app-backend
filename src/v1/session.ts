@@ -1,0 +1,76 @@
+import express, { NextFunction, Request, Response } from "express";
+import { orm } from "../database/index.js";
+import { checkSchema, Meta } from "express-validator";
+import { SessionEntity } from "../entities/session.entity.js";
+import { UserAccountEntity } from "../entities/user-account.entity.js";
+
+export const sessionRoute = express();
+const em = orm.em;
+
+async function validateSession(session: string) {
+    console.log(session);
+    const entity = await em.findOne(SessionEntity, {
+        token: session.split(" ")[1],
+    });
+
+    if (!entity) {
+        throw new Error("Unknown session");
+    }
+}
+
+export async function authorizedRoute(req: Request, res: Response, next: NextFunction) {
+    const result = await checkSchema({
+        Authorization: {
+            in: "headers",
+            isString: true,
+            custom: {
+                bail: true,
+                options: validateSession,
+            },
+        },
+    })
+      .run(req);
+
+    const mappedErrors = result.filter(r => !r.isEmpty())
+                               .map(r => r.array())
+                               .flat();
+
+    if (mappedErrors.length > 0) {
+        return res.status(403)
+                  .json({ errors: mappedErrors });
+    }
+
+    next();
+}
+
+export async function createSession(req: Meta["req"], user: UserAccountEntity) {
+    const session = em.create(SessionEntity, {
+        user,
+        token: `${Math.floor(Math.random() * 1000 * Date.now())
+                      .toString(16)}${Date.now()
+                                          .toString(16)}`,
+        ipAddress: req.header("X-Real-IP") ?? req.ip ?? "unknown",
+    });
+
+    await em.persistAndFlush(session);
+
+    return session;
+}
+
+export async function getSessionAccount(req: Meta["req"]): Promise<UserAccountEntity> {
+    const token = req.header("Authorization")
+                     ?.split(" ")[1];
+
+    if (!token) throw new Error("Request does not contain auth header");
+
+    const session = await em.findOneOrFail(SessionEntity, {
+        token,
+    }, {
+        populate: ["user"],
+    });
+
+    return session.user;
+}
+
+sessionRoute.post("/refresh", async (req, res) => {
+});

@@ -3,14 +3,15 @@ import { orm } from "../database/index.js";
 import { checkSchema, Meta } from "express-validator";
 import { TodoListEntity } from "../entities/todo-list.entity.js";
 import { TodoItemEntity } from "../entities/todo-item.entity.js";
+import { authorizedRoute, getSessionAccount } from "./session.js";
 
 export const todoRoute = express();
 const em = orm.em;
 
-// todo handle authorization
+todoRoute.use(authorizedRoute);
 
 async function checkTodoList(uuid: string, meta: Meta) {
-    const accountUuid = await fetchSessionAccountUuid(meta.req);
+    const accountUuid = (await getSessionAccount(meta.req)).uuid;
     const list = await em.findOne(TodoListEntity, {
         user: accountUuid,
         uuid,
@@ -22,7 +23,7 @@ async function checkTodoList(uuid: string, meta: Meta) {
 }
 
 async function getTodoItem(uuid: string, meta: { req: Meta["req"] }) {
-    const accountUuid = await fetchSessionAccountUuid(meta.req);
+    const accountUuid = (await getSessionAccount(meta.req)).uuid;
     const listUuid = meta.req.params!.list as string;
 
     const item = await em.findOne(TodoItemEntity, {
@@ -38,10 +39,6 @@ async function getTodoItem(uuid: string, meta: { req: Meta["req"] }) {
     }
 
     return item;
-}
-
-async function fetchSessionAccountUuid(req: any) {
-    return "b6102c6c-b2ea-4ffd-bb6d-888a8ab46511"; // todo
 }
 
 todoRoute.post("/create/:list", async (req, res) => {

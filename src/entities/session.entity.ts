@@ -3,7 +3,7 @@ import { UserAccountEntity } from "./user-account.entity.js";
 
 @Entity()
 export class SessionEntity {
-    [OptionalProps]?: "user";
+    [OptionalProps]?: "user" | "expiresAt";
 
     @PrimaryKey()
     token!: string;
@@ -12,7 +12,7 @@ export class SessionEntity {
     user!: UserAccountEntity;
 
     @Property()
-    expiresAt!: Date;
+    expiresAt: number = Date.now() + 30 * 24 * 60 * 60 * 1000;
 
     @Property()
     ipAddress!: string;

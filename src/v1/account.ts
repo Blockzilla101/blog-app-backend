@@ -198,6 +198,7 @@ accountRoute.get("/info", async (req, res) => {
                            uuid: i.uuid,
                            title: i.title,
                            completed: i.completed,
+                           dueDate: i.dueDate,
                        })),
            })),
        });

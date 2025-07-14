@@ -174,6 +174,7 @@ todoRoute.patch("/update/:list/:todo", async (req, res) => {
                   uuid: item.uuid,
                   title: item.title,
                   completed: item.completed,
+                  dueDate: item.dueDate,
               });
 });
 

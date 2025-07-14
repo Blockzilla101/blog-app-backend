@@ -19,5 +19,8 @@ export class TodoItemEntity {
     completed: boolean = false;
 
     @Property()
+    dueDate!: number;
+
+    @Property()
     createdAt: Date = new Date();
 }

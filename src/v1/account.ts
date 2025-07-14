@@ -161,7 +161,6 @@ accountRoute.post("/login", async (req, res) => {
 accountRoute.use(authorizedRoute);
 
 accountRoute.get("/info", async (req, res) => {
-    // todo use the provided session token
     const account = await getSessionAccount(req);
 
     if (!account) {

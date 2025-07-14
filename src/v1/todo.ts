@@ -62,6 +62,10 @@ todoRoute.post("/create/:list", async (req, res) => {
                 },
             },
         },
+        dueDate: {
+            in: "body",
+            isNumeric: true,
+        },
     }, ["params", "body"])
       .run(req);
 
@@ -79,6 +83,7 @@ todoRoute.post("/create/:list", async (req, res) => {
     const item = em.create(TodoItemEntity, {
         list: listUuid,
         title: req.body.title,
+        dueDate: req.body.dueDate,
     });
 
     await em.persistAndFlush(item);
@@ -88,6 +93,7 @@ todoRoute.post("/create/:list", async (req, res) => {
                   uuid: item.uuid,
                   title: item.title,
                   completed: item.completed,
+                  dueDate: item.dueDate,
               });
 });
 
@@ -128,6 +134,11 @@ todoRoute.patch("/update/:list/:todo", async (req, res) => {
             isBoolean: true,
             optional: true,
         },
+        dueDate: {
+            in: "body",
+            isNumeric: true,
+            optional: true,
+        },
     }, ["params", "body"])
       .run(req);
 
@@ -143,8 +154,9 @@ todoRoute.patch("/update/:list/:todo", async (req, res) => {
     const item = await getTodoItem(req.params.todo, { req });
     const title = req.body.title;
     const completed = req.body.completed;
+    const dueDate = req.body.dueDate;
 
-    if (title == null && completed == null) {
+    if (title == null && completed == null && dueDate == null) {
         return res.status(400)
                   .json({
                       errors: [{ msg: "At least one field must be provided" }],
@@ -153,6 +165,7 @@ todoRoute.patch("/update/:list/:todo", async (req, res) => {
 
     if (title != null) item.title = title;
     if (completed != null) item.completed = completed;
+    if (dueDate != null) item.dueDate = dueDate;
 
     await em.persistAndFlush(item);
 

@@ -4,6 +4,7 @@ import { checkSchema, Meta } from "express-validator";
 import { SessionEntity } from "../entities/session.entity.js";
 import { UserAccountEntity } from "../entities/user-account.entity.js";
 import { generateToken } from "../util.js";
+import { maxSessionAge } from "../constants.js";
 
 export const sessionRoute = express();
 const em = orm.em;
@@ -79,7 +80,7 @@ sessionRoute.get("/refresh", async (req, res) => {
         populate: ["user"],
     });
 
-    session.expiresAt = Date.now() + 30 * 24 * 60 * 60 * 1000;
+    session.expiresAt = Date.now() + maxSessionAge;
 
     await em.persistAndFlush(session);
 

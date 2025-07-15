@@ -8,10 +8,9 @@ import { generateToken } from "../util.js";
 export const sessionRoute = express();
 const em = orm.em;
 
-async function validateSession(session: string) {
-    console.log(session);
+async function validateSession(token: string) {
     const entity = await em.findOne(SessionEntity, {
-        token: session.split(" ")[1],
+        token,
     });
 
     if (!entity) {
@@ -57,8 +56,7 @@ export async function createSession(req: Meta["req"], user: UserAccountEntity) {
 }
 
 export async function getSessionAccount(req: Meta["req"]): Promise<UserAccountEntity> {
-    const token = req.header("Authorization")
-                     ?.split(" ")[1];
+    const token = req.header("Authorization");
 
     if (!token) throw new Error("Request does not contain auth header");
 
@@ -74,7 +72,7 @@ export async function getSessionAccount(req: Meta["req"]): Promise<UserAccountEn
 sessionRoute.use(authorizedRoute);
 
 sessionRoute.get("/refresh", async (req, res) => {
-    const token = req.header("Authorization")!.split(" ")[1];
+    const token = req.header("Authorization");
     const session = await em.findOneOrFail(SessionEntity, {
         token,
     }, {
@@ -99,7 +97,7 @@ sessionRoute.get("/refresh", async (req, res) => {
 });
 
 sessionRoute.get("/revoke", async (req, res) => {
-    const token = req.header("Authorization")!.split(" ")[1];
+    const token = req.header("Authorization");
     const session = await em.findOneOrFail(SessionEntity, {
         token,
     });

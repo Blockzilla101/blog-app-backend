@@ -5,7 +5,7 @@ import { SessionEntity } from "./session.entity.js";
 
 @Entity()
 export class UserAccountEntity {
-    [OptionalProps]?: "uuid" | "todoLists" | "sessions";
+    [OptionalProps]?: "uuid" | "todoLists" | "sessions" | "bio";
 
     @PrimaryKey({ type: "uuid" })
     uuid = v4();
@@ -18,6 +18,12 @@ export class UserAccountEntity {
 
     @Property({ unique: true })
     email!: string;
+
+    @Property()
+    avatar?: string;
+
+    @Property()
+    bio = "";
 
     @Property()
     passwordHash!: string;

@@ -1,7 +1,7 @@
 import express from "express";
 import { orm } from "../database/index.js";
 import { UserAccountEntity } from "../entities/user-account.entity.js";
-import { checkSchema } from "express-validator";
+import { checkSchema, Meta } from "express-validator";
 import { compareSecret, hashSecret } from "../util.js";
 import { TodoListEntity } from "../entities/todo-list.entity.js";
 import { authorizedRoute, createSession, getSessionAccount } from "./session.js";
@@ -9,7 +9,14 @@ import { authorizedRoute, createSession, getSessionAccount } from "./session.js"
 export const accountRoute = express();
 const em = orm.em;
 
-async function checkEmailNotExists(email: string) {
+async function checkEmailNotExists(email: string, meta: Meta) {
+    if (meta.req.headers && meta.req.headers["authorization"]) {
+        const account = await getSessionAccount(meta.req);
+        if (account.email === email) {
+            return true;
+        }
+    }
+
     const existing = await em.findOne(UserAccountEntity, { email });
     if (existing) {
         throw new Error("Account already exists, please login");
@@ -31,16 +38,16 @@ accountRoute.post("/sign-up", async (req, res) => {
         firstName: {
             isString: true,
             isLength: {
-                options: { min: 2, max: 50 },
-                errorMessage: "First name must be between 2 and 50 characters",
+                options: { min: 2, max: 25 },
+                errorMessage: "First name must be between 2 and 25 characters",
             },
             trim: true,
         },
         lastName: {
             isString: true,
             isLength: {
-                options: { min: 2, max: 50 },
-                errorMessage: "Last name must be between 2 and 50 characters",
+                options: { min: 2, max: 25 },
+                errorMessage: "Last name must be between 2 and 25 characters",
             },
             trim: true,
         },
@@ -188,16 +195,81 @@ accountRoute.get("/info", async (req, res) => {
            uuid: account.uuid,
            firstName: account.firstName,
            lastName: account.lastName,
-           todoLists: account.todoLists.map(t => ({
-               name: t.name,
-               uuid: t.uuid,
-               items: t.items
-                       .map(i => ({
-                           uuid: i.uuid,
-                           title: i.title,
-                           completed: i.completed,
-                           dueDate: i.dueDate,
-                       })),
-           })),
+           email: account.email,
+           avatar: account.avatar,
+           bio: account.bio,
        });
+});
+
+accountRoute.patch("/update", async (req, res) => {
+    const result = await checkSchema({
+        email: {
+            optional: true,
+            isEmail: {
+                errorMessage: "Invalid email format",
+            },
+            custom: {
+                options: checkEmailNotExists,
+                errorMessage: "Email already exists",
+                bail: true,
+            },
+            normalizeEmail: true,
+        },
+        firstName: {
+            optional: true,
+            isString: true,
+            isLength: {
+                options: { min: 2, max: 25 },
+                errorMessage: "First name must be between 2 and 25 characters",
+            },
+            trim: true,
+        },
+        lastName: {
+            optional: true,
+            isString: true,
+            isLength: {
+                options: { min: 2, max: 25 },
+                errorMessage: "Last name must be between 2 and 25 characters",
+            },
+            trim: true,
+        },
+        bio: {
+            optional: true,
+            isString: true,
+            isLength: {
+                options: { min: 2, max: 50 },
+                errorMessage: "Bio must be between 2 and 50 characters",
+            },
+            trim: true,
+        },
+    }, ["body"])
+      .run(req);
+
+    const mappedErrors = result.filter(r => !r.isEmpty())
+                               .map(r => r.array())
+                               .flat();
+
+    if (mappedErrors.length > 0) {
+        return res.status(400)
+                  .json({ errors: mappedErrors });
+    }
+
+    const email = req.body.email;
+    const firstName = req.body.firstName;
+    const lastName = req.body.lastName;
+    const bio = req.body.bio;
+
+    const account = await getSessionAccount(req);
+
+    if (email) account.email = email;
+    if (firstName) account.firstName = firstName;
+    if (lastName) account.lastName = lastName;
+    if (bio) account.bio = bio;
+
+    await em.persistAndFlush(account);
+
+    return res.status(200)
+              .json({
+                  success: true,
+              });
 });

@@ -5,7 +5,7 @@ import { SessionEntity } from "./session.entity.js";
 
 @Entity()
 export class UserAccountEntity {
-    [OptionalProps]?: "uuid" | "todoLists" | "sessions" | "bio";
+    [OptionalProps]?: "uuid" | "blogs" | "sessions" | "bio";
 
     @PrimaryKey({ type: "uuid" })
     uuid = v4();

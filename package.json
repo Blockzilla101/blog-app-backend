@@ -1,7 +1,7 @@
 {
-  "name": "todo-app-backend",
+  "name": "blog-app-backend",
   "version": "0.0.1",
-  "description": "backend for todo app",
+  "description": "backend for blog app",
   "main": "dist/index.js",
   "private": true,
   "type": "module",

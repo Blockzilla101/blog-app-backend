@@ -2,7 +2,7 @@ import express from "express";
 import { orm } from "../database/index.js";
 import { UserAccountEntity } from "../entities/user-account.entity.js";
 import { checkSchema, Meta } from "express-validator";
-import { compareSecret, hashSecret } from "../util.js";
+import { compareSecret, handleValidatorError, hashSecret } from "../util.js";
 import { authorizedRoute, createSession, getSessionAccount } from "./session.js";
 
 export const accountRoute = express();
@@ -61,13 +61,10 @@ accountRoute.post("/sign-up", async (req, res) => {
     }, ["body"])
       .run(req);
 
-    const mappedErrors = result.filter(r => !r.isEmpty())
-                               .map(r => r.array())
-                               .flat();
-
-    if (mappedErrors.length > 0) {
+    const errors = handleValidatorError(result);
+    if (errors) {
         return res.status(400)
-                  .json({ errors: mappedErrors });
+                  .json({ errors });
     }
 
     const email = req.body.email;
@@ -118,13 +115,10 @@ accountRoute.post("/login", async (req, res) => {
     }, ["body"])
       .run(req);
 
-    const mappedErrors = result.filter(r => !r.isEmpty())
-                               .map(r => r.array())
-                               .flat();
-
-    if (mappedErrors.length > 0) {
+    const errors = handleValidatorError(result);
+    if (errors) {
         return res.status(400)
-                  .json({ errors: mappedErrors });
+                  .json({ errors });
     }
 
     const email = req.body.email;
@@ -231,13 +225,10 @@ accountRoute.patch("/update", async (req, res) => {
     }, ["body"])
       .run(req);
 
-    const mappedErrors = result.filter(r => !r.isEmpty())
-                               .map(r => r.array())
-                               .flat();
-
-    if (mappedErrors.length > 0) {
+    const errors = handleValidatorError(result);
+    if (errors) {
         return res.status(400)
-                  .json({ errors: mappedErrors });
+                  .json({ errors });
     }
 
     const email = req.body.email;

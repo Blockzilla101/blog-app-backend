@@ -1,4 +1,5 @@
 import { randomBytes, scryptSync } from "node:crypto";
+import type { ResultWithContext } from "express-validator/lib/chain/index.js";
 
 export function hashSecret(password: string): string {
     const salt = randomBytes(16);
@@ -20,4 +21,16 @@ export function compareSecret(
 export function generateToken() {
     return Buffer.from(randomBytes(64))
                  .toString("hex");
+}
+
+export function handleValidatorError(result: ResultWithContext[]) {
+    const mappedErrors = result.filter(r => !r.isEmpty())
+                               .map(r => r.array())
+                               .flat();
+
+    if (mappedErrors.length > 0) {
+        return mappedErrors;
+    }
+
+    return null;
 }

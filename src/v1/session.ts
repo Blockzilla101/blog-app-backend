@@ -3,7 +3,7 @@ import { orm } from "../database/index.js";
 import { checkSchema, Meta } from "express-validator";
 import { SessionEntity } from "../entities/session.entity.js";
 import { UserAccountEntity } from "../entities/user-account.entity.js";
-import { generateToken } from "../util.js";
+import { generateToken, handleValidatorError } from "../util.js";
 import { maxSessionAge } from "../constants.js";
 
 export const sessionRoute = express();
@@ -32,13 +32,10 @@ export async function authorizedRoute(req: Request, res: Response, next: NextFun
     })
       .run(req);
 
-    const mappedErrors = result.filter(r => !r.isEmpty())
-                               .map(r => r.array())
-                               .flat();
-
-    if (mappedErrors.length > 0) {
-        return res.status(403)
-                  .json({ errors: mappedErrors });
+    const errors = handleValidatorError(result);
+    if (errors) {
+        return res.status(400)
+                  .json({ errors });
     }
 
     next();

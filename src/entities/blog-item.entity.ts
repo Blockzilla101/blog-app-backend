@@ -4,7 +4,7 @@ import { v4 } from "uuid";
 
 @Entity()
 export class BlogItemEntity {
-    [OptionalProps]?: "uuid" | "todoLists" | "sessions" | "bio";
+    [OptionalProps]?: "uuid" | "createdAt";
 
     @PrimaryKey({ type: "uuid" })
     uuid = v4();

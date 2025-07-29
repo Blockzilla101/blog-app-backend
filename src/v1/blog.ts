@@ -4,6 +4,7 @@ import { checkSchema } from "express-validator";
 import { handleValidatorError } from "../util.js";
 import { orm } from "../database/index.js";
 import { BlogItemEntity } from "../entities/blog-item.entity.js";
+import { FilterQuery } from "@mikro-orm/core";
 
 export const blogRoute = express();
 const em = orm.em;
@@ -71,11 +72,15 @@ blogRoute.get("/blogs", async (req, res) => {
                   .json({ errors });
     }
 
-    const cursor = await em.findByCursor(BlogItemEntity, {
-        author: {
-            uuid: req.query.author as string ?? undefined,
-        },
-    }, {
+    const filter: FilterQuery<BlogItemEntity> = {};
+
+    if (req.query.author) {
+        filter.author = {
+            uuid: req.query.author as string,
+        };
+    }
+
+    const cursor = await em.findByCursor(BlogItemEntity, filter, {
         first: req.query.limit as unknown as number ?? 10,
         after: req.query.after as string ?? undefined,
         orderBy: {

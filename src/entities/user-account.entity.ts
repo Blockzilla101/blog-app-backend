@@ -1,6 +1,6 @@
 import { Collection, Entity, OneToMany, OptionalProps, PrimaryKey, Property } from "@mikro-orm/core";
 import { v4 } from "uuid";
-import { TodoListEntity } from "./todo-list.entity.js";
+import { BlogItemEntity } from "./blog-item.entity.js";
 import { SessionEntity } from "./session.entity.js";
 
 @Entity()
@@ -28,8 +28,8 @@ export class UserAccountEntity {
     @Property()
     passwordHash!: string;
 
-    @OneToMany({ entity: () => TodoListEntity, mappedBy: "user" })
-    todoLists!: Collection<TodoListEntity>;
+    @OneToMany({ entity: () => BlogItemEntity, mappedBy: "author" })
+    blogs!: Collection<BlogItemEntity>;
 
     @OneToMany({ entity: () => SessionEntity, mappedBy: "user" })
     sessions!: Collection<SessionEntity>;

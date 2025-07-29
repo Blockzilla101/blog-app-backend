@@ -3,7 +3,6 @@ import { orm } from "../database/index.js";
 import { UserAccountEntity } from "../entities/user-account.entity.js";
 import { checkSchema, Meta } from "express-validator";
 import { compareSecret, hashSecret } from "../util.js";
-import { TodoListEntity } from "../entities/todo-list.entity.js";
 import { authorizedRoute, createSession, getSessionAccount } from "./session.js";
 
 export const accountRoute = express();
@@ -83,12 +82,7 @@ accountRoute.post("/sign-up", async (req, res) => {
         passwordHash: hashSecret(password),
     });
 
-    const todoList = em.create(TodoListEntity, {
-        user: account,
-        name: "Your Todo List",
-    });
-
-    await em.persistAndFlush([account, todoList]);
+    await em.persistAndFlush(account);
 
     const session = await createSession(req, account);
 
@@ -179,16 +173,7 @@ accountRoute.get("/info", async (req, res) => {
                   });
     }
 
-    const lists = await account.todoLists.loadItems();
-    for (const list of lists) {
-        await list.items.loadItems({
-            refresh: true,
-            orderBy: {
-                completed: "ASC",
-                createdAt: "DESC",
-            },
-        });
-    }
+    const blogs = await account.blogs.loadItems();
 
     res.status(200)
        .json({
@@ -198,6 +183,7 @@ accountRoute.get("/info", async (req, res) => {
            email: account.email,
            avatar: account.avatar,
            bio: account.bio,
+           blogUuids: blogs.map(b => b.uuid),
        });
 });
 

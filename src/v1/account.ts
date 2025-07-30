@@ -137,7 +137,7 @@ accountRoute.post("/login", async (req, res) => {
 
     const account = await em.findOne(UserAccountEntity, { email });
     if (!account || !compareSecret(password, account.passwordHash)) {
-        return res.status(401)
+        return res.status(400)
                   .json({
                       errors: [
                           {

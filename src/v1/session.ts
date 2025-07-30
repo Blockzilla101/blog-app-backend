@@ -17,6 +17,10 @@ async function validateSession(token: string) {
     if (!entity) {
         throw new Error("Unknown session");
     }
+
+    if (entity.expiresAt < Date.now()) {
+        throw new Error("Session expired");
+    }
 }
 
 export async function authorizedRoute(req: Request, res: Response, next: NextFunction) {
@@ -83,14 +87,8 @@ sessionRoute.get("/refresh", async (req, res) => {
 
     return res.status(200)
               .json({
-                  account: {
-                      firstName: session.user.firstName,
-                      lastName: session.user.lastName,
-                  },
-                  session: {
-                      token: session.token,
-                      expiresAt: session.expiresAt,
-                  },
+                  token: session.token,
+                  expiresAt: session.expiresAt,
               });
 });
 
@@ -102,8 +100,5 @@ sessionRoute.get("/revoke", async (req, res) => {
 
     await em.removeAndFlush(session);
 
-    return res.status(200)
-              .json({
-                  success: "true",
-              });
+    return res.status(204);
 });

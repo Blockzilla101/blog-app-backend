@@ -22,6 +22,20 @@ async function checkEmailNotExists(email: string, meta: Meta) {
     }
 }
 
+async function transformAccount(account: UserAccountEntity) {
+    const blogs = await account.blogs.loadItems();
+
+    return {
+        uuid: account.uuid,
+        firstName: account.firstName,
+        lastName: account.lastName,
+        email: account.email,
+        avatar: account.avatar,
+        bio: account.bio,
+        blogUuids: blogs.map(b => b.uuid),
+    };
+}
+
 accountRoute.post("/sign-up", async (req, res) => {
     const result = await checkSchema({
         email: {
@@ -36,27 +50,27 @@ accountRoute.post("/sign-up", async (req, res) => {
         },
         firstName: {
             isString: true,
+            trim: true,
             isLength: {
                 options: { min: 2, max: 25 },
                 errorMessage: "First name must be between 2 and 25 characters",
             },
-            trim: true,
         },
         lastName: {
             isString: true,
+            trim: true,
             isLength: {
                 options: { min: 2, max: 25 },
                 errorMessage: "Last name must be between 2 and 25 characters",
             },
-            trim: true,
         },
         password: {
             isString: true,
+            trim: true,
             isLength: {
                 options: { min: 8 },
                 errorMessage: "Password must be at least 8 characters long",
             },
-            trim: true,
         },
     }, ["body"])
       .run(req);
@@ -85,10 +99,7 @@ accountRoute.post("/sign-up", async (req, res) => {
 
     return res.status(200)
               .json({
-                  account: {
-                      firstName: account.firstName,
-                      lastName: account.lastName,
-                  },
+                  account: await transformAccount(account),
                   session: {
                       token: session.token,
                       expiresAt: session.expiresAt,
@@ -140,10 +151,7 @@ accountRoute.post("/login", async (req, res) => {
 
     return res.status(200)
               .json({
-                  account: {
-                      firstName: account.firstName,
-                      lastName: account.lastName,
-                  },
+                  account: await transformAccount(account),
                   session: {
                       token: session.token,
                       expiresAt: session.expiresAt,
@@ -167,18 +175,8 @@ accountRoute.get("/info", async (req, res) => {
                   });
     }
 
-    const blogs = await account.blogs.loadItems();
-
     res.status(200)
-       .json({
-           uuid: account.uuid,
-           firstName: account.firstName,
-           lastName: account.lastName,
-           email: account.email,
-           avatar: account.avatar,
-           bio: account.bio,
-           blogUuids: blogs.map(b => b.uuid),
-       });
+       .json(await transformAccount(account));
 });
 
 accountRoute.patch("/update", async (req, res) => {
@@ -198,29 +196,29 @@ accountRoute.patch("/update", async (req, res) => {
         firstName: {
             optional: true,
             isString: true,
+            trim: true,
             isLength: {
                 options: { min: 2, max: 25 },
                 errorMessage: "First name must be between 2 and 25 characters",
             },
-            trim: true,
         },
         lastName: {
             optional: true,
             isString: true,
+            trim: true,
             isLength: {
                 options: { min: 2, max: 25 },
                 errorMessage: "Last name must be between 2 and 25 characters",
             },
-            trim: true,
         },
         bio: {
             optional: true,
             isString: true,
+            trim: true,
             isLength: {
                 options: { min: 2, max: 50 },
                 errorMessage: "Bio must be between 2 and 50 characters",
             },
-            trim: true,
         },
     }, ["body"])
       .run(req);
@@ -245,8 +243,5 @@ accountRoute.patch("/update", async (req, res) => {
 
     await em.persistAndFlush(account);
 
-    return res.status(200)
-              .json({
-                  success: true,
-              });
+    return res.status(204);
 });
